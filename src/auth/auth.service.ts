@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { AuthDto } from "./dto";
 import * as argon from 'argon2';
@@ -52,8 +52,45 @@ export class AuthService{
         return user;
     } */
 
-    signin() {
-        return { msg: 'User signed in successfully.' }
+    async signin(dto: AuthDto) {
+        // find the user by email
+        const user = await this.prismaService.user.findUnique({
+            where: {
+                email: dto.email,
+            },
+        })
+        // id user does not exists throw exception
+        if (!user) {
+            throw new ForbiddenException('Credentials incorrect.');
+        }
+        // compare password
+        const pwdMatches  = await argon.verify(user.hash, dto.password);
+        // if password is incorrect throw exception
+        if (!pwdMatches) {
+            throw new ForbiddenException('Credentials incorrect');
+        }
+        // if all success, send back the user
+        delete user.hash;
+        return user;
+
+        /* try {
+            const user = await this.prismaService.user.findUniqueOrThrow({
+                where: {
+                    email: dto.email
+                }
+            });
+            if (await argon.verify(user.hash, dto.password)) {
+                delete user.hash;
+                return user;
+            } else {
+                throw new BadRequestException("Invalid password.");
+            }
+        } catch (error) {
+            if (error.code === 'P2025') {
+                throw new NotFoundException('Cannot find the user.');
+            }
+        } */
+        // return { msg: 'User signed in successfully.' }
     }
 
 }
