@@ -1,6 +1,6 @@
-import { Controller, Post, Req } from "@nestjs/common";
+import { Body, Controller, ParseIntPipe, Post} from "@nestjs/common";
 import { AuthService } from "./auth.service";
-import { Request } from "express";
+import { AuthDto } from "./dto";
 
 @Controller('auth')
 export class AuthController{
@@ -8,10 +8,24 @@ export class AuthController{
     }
 
     @Post('signup')
-    signup(@Req() req: Request) {
-        console.log(req.body);
-        return this.authService.signup();
+    signup(@Body() dto: AuthDto) {
+        return this.authService.signup(dto);
     }
+
+    // use a pipe to convert to numbers
+    // @Post('signup')
+    // signup(
+    //     @Body('email') email: string, 
+    //     @Body('password', ParseIntPipe) password: string
+    //     ) {
+    //     console.log({
+    //         email,
+    //         typeOfEmail: typeof email,
+    //         password,
+    //         typeOfPassword: typeof password
+    //     });
+    //     return this.authService.signup();
+    // }
 
     @Post('signin')
     signin() {
