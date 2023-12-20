@@ -4,6 +4,8 @@ import { AppModule } from '../src/app.module';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { AuthDto } from '../src/auth/dto';
+import { authenticate } from 'passport';
+import { EditUserDto } from 'src/user/dto';
 
 // whatever the things in main.ts should implment here to test
 
@@ -129,7 +131,8 @@ describe('App e2e', () => {
             '/auth/signin',
           )
           .withBody(dto)
-          .expectStatus(200);
+          .expectStatus(200)
+          .stores('accessToken', 'access_token');
           // .inspect();
       });
 
@@ -139,9 +142,36 @@ describe('App e2e', () => {
 
   describe('User', () => {
 
-    describe('Get me', () => {});
+    describe('Get me', () => {
+      it('shoult get current user', () => {
+        return pactum
+          .spec()
+          .get('/users/me')
+          .withHeaders({
+            Authorization: 'Bearer $S{accessToken}',
+          })
+          .expectStatus(200);
+      });
+    });
 
-    describe('Edit user', () => {});
+    describe('Edit user', () => {
+      it('shoult edit user', () => {
+        const dto: EditUserDto = {
+          firstName: "testing",
+          email: 'abc@gmail.com'
+        };
+        return pactum
+          .spec()
+          .patch('/users')
+          .withHeaders({
+            Authorization: 'Bearer $S{accessToken}',
+          })
+          .withBody(dto)
+          .expectStatus(200)
+          .expectBodyContains(dto.firstName)
+          .expectBodyContains(dto.email);
+      });
+    });
 
   });
 
