@@ -6,6 +6,7 @@ import { PrismaService } from '../src/prisma/prisma.service';
 import { AuthDto } from '../src/auth/dto';
 import { authenticate } from 'passport';
 import { EditUserDto } from 'src/user/dto';
+import { CreateBookmarkDto, EditBookmarkDto } from 'src/bookmark/dto';
 
 // whatever the things in main.ts should implment here to test
 
@@ -177,15 +178,105 @@ describe('App e2e', () => {
 
   describe('Bookmarks', () => {
 
-    describe('Create bookmark', () => {});
+    describe('Get empty bookmarks', () => {
+      it("should get bookmarks", () => {
+        return pactum
+          .spec()
+          .get('/bookmarks')
+          .withHeaders({
+            Authorization: 'Bearer $S{accessToken}'
+          })
+          .expectStatus(200)
+          .expectBody([]);
+      })
+    });
 
-    describe('Get bookmarks', () => {});
+    describe('Create bookmark', () => {
+      const dto: CreateBookmarkDto = {
+          title: 'First Bookmark',
+          link: 'http://www.youtube.com/watch?v=asdfsdf'
+      };
+      it("should create bookmark", () => {
+        return pactum
+          .spec()
+          .post('/bookmarks')
+          .withHeaders({
+            Authorization: 'Bearer $S{accessToken}'
+          })
+          .withBody(dto)
+          .expectStatus(201)
+          .stores('bookmarkId', 'id');
+      })
+    });
 
-    describe('Get bookmark by id', () => {});
+    describe('Get bookmarks', () => {
+      it('should get bookmarks', () => {
+        return pactum
+          .spec()
+          .get('/bookmarks')
+          .withHeaders({
+            Authorization: 'Bearer $S{accessToken}'
+          })
+          .expectStatus(200);
+      })
+    });
 
-    describe('Edit bookmark', () => {});
+    describe('Get bookmark by id', () => {
+      it('should get bookmark by id', () => {
+        return pactum
+          .spec()
+          .get('/bookmarks/{id}')
+          .withPathParams('id', '$S{bookmarkId}')
+          .withHeaders({
+            Authorization: 'Bearer $S{accessToken}'
+          })
+          .expectStatus(200);
+      })
+    });
 
-    describe('Delete bookmark', () => {});
+    describe('Edit bookmark by id', () => {
+      const dto: EditBookmarkDto = {
+        title: 'kubernetes full couse',
+        description: 'sdfs asf asdfsf',
+        link: 'asfaf'
+      }
+      it('should edit bookmark by id', () => {
+        return pactum
+          .spec()
+          .patch('/bookmarks/{id}')
+          .withPathParams('id', '$S{bookmarkId}')
+          .withHeaders({
+            Authorization: 'Bearer $S{accessToken}'
+          })
+          .withBody(dto)
+          .expectStatus(200);
+      })
+    });
+
+    describe('Delete bookmark', () => {
+      it('should delete bookmark by id', () => {
+        return pactum
+          .spec()
+          .delete('/bookmarks/{id}')
+          .withPathParams('id', '$S{bookmarkId}')
+          .withHeaders({
+            Authorization: 'Bearer $S{accessToken}'
+          })
+          .expectStatus(204);
+      })
+
+      it('should get empty bookmarks after delete', () => {
+        return pactum
+          .spec()
+          .get('/bookmarks')
+          .withHeaders({
+            Authorization: 'Bearer $S{accessToken}'
+          })
+          .expectStatus(200)
+          .expectJsonLength(0);
+      });
+
+    });
 
   });
 
